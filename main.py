@@ -1,5 +1,7 @@
 import config   # bot token
 import discord
+from datetime import datetime
+from dataclasses import dataclass
 from discord import app_commands
 from discord.ext import commands
 
@@ -11,6 +13,17 @@ intents.message_content = True
 
 bot : commands.Bot = commands.Bot(command_prefix='/', intents=intents)
 tree : app_commands.CommandTree = bot.tree
+
+@dataclass
+class DiscordUser:
+    user_id: str
+    user_Name: str
+    display_names: list[str]
+    avatar_url: str
+    account_created: datetime
+    joined_server: datetime
+    roles: list[str]
+
 
 @bot.event
 async def on_ready():
@@ -29,8 +42,27 @@ async def on_message(message: discord.Message):
     if message.author == bot.user:
         return
     print(f'{message.author}: {message.content}')
+    GetUserInfo(message.author)
     await bot.process_commands(message)
 
+
+def GetUserInfo(member: discord.Member = None):
+    # ToDo: testing, guardar en bd y refactorizar.
+
+    embed = discord.Embed(title="User Info", color=discord.Color.blue())
+    embed.set_thumbnail(url=member.avatar.url if member.avatar else None)
+    
+    user_name: str = str(member)
+    user_id: str = member.id
+    display_name: str = member.display_name
+    avatar_url: str = member.avatar.url if member.avatar else None
+    account_created: datetime = member.created_at
+    joined_server: datetime = member.joined_at
+    roles: list[str]  = [role.name for role in member.roles if role.name != "@everyone"]
+    
+    discord_user = DiscordUser(user_name,user_id, display_name, avatar_url, account_created,joined_server,roles)
+    print("done")
+    print(discord_user.avatar_url)
 
 @tree.command(name="userinfo", description="Muestra información del usuario mencionado")
 @app_commands.describe(member="El usuario del que quieres ver información (opcional)")
@@ -56,30 +88,20 @@ async def userinfo_slash(interaction: discord.Interaction, member: discord.Membe
     await interaction.response.send_message(embed=embed)
 
 
-@bot.command()
+@tree.command(name="purge", description="Borra los ultimos 100 mensajes recientes")
 async def purge(ctx: commands.Context):
-    """
-    Borra los ultimos 100 mensajes.
-    """
     try:
         deleted = await ctx.channel.purge(limit=100)
         await ctx.send(f'Borrados {len(deleted)} mensajes.', delete_after=5)
     except Exception as e:
         await ctx.send(f'No se pudieron borrar los mensajes: {e}')
 
-
-#@bot.command()
-async def dmx(ctx: commands.Context, *, message_content: str):
-    """
-    Envia un mensaje directo con cow_say al usuario con ID especificado.
-    """
-    user_id : 1234
-    try:
-        user = await bot.fetch_user(user_id)
-        await user.send(f"{message_content}")
-        print(f'DM enviado a {user.name}.')
-    except Exception as e:
-        await ctx.send(f'No se pudo enviar el mensaje: {e}')
+# @tree.command(name="dm", description="manda un mensaje directo desde el bot.")
+# async def dm(ctx: commands.Context, *, message_content: str):
+#     try:
+#         print(f'DM enviado a {user.name}.')
+#     except Exception as e:
+#         await ctx.send(f'No se pudo enviar el mensaje: {e}')
 
 
 # Inicia el bot
