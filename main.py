@@ -4,6 +4,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from discord import app_commands
 from discord.ext import commands
+import re
 
 # Nuevo bot para hacer un log de usuarios.
 
@@ -24,18 +25,6 @@ class DiscordUser:
     joined_server: datetime
     roles: list[str]
 
-
-@bot.event
-async def on_ready():
-    print(f'----- BOT ONLINE: {bot.user} -----')
-    try:
-        # Sincroniza los comandos de slash con Discord
-        synced: list[app_commands.AppCommand] = await tree.sync()
-        print(f'[{len(synced)}] Comandos sincronizados.')
-    except Exception as e:
-        print(f'Error al sincronizar comandos: {e}')
-
-
 # log de mensajes recibidos
 @bot.event
 async def on_message(message: discord.Message):
@@ -43,6 +32,7 @@ async def on_message(message: discord.Message):
         return
     print(f'{message.author}: {message.content}')
     GetUserInfo(message.author)
+    GetStuff(message.content)
     await bot.process_commands(message)
 
 
@@ -62,32 +52,28 @@ def GetUserInfo(member: discord.Member = None):
     
     discord_user = DiscordUser(user_name,user_id, display_name, avatar_url, account_created,joined_server,roles)
     print("done")
-    print(discord_user.avatar_url)
+    print(discord_user.roles)
 
-@tree.command(name="userinfo", description="Muestra información del usuario mencionado")
-@app_commands.describe(member="El usuario del que quieres ver información (opcional)")
-async def userinfo_slash(interaction: discord.Interaction, member: discord.Member = None):
-    """
-    Muestra información del usuario mencionado en formato embed.
-    """
-    target_member : discord.Member = member or interaction.user
-    roles = [role.name for role in target_member.roles if role.name != "@everyone"]
+# rescatamos cositas interesantes:
+def GetStuff(content: str):
+    url_pattern = r"(?:(?:https?|ftp|file)://|www\.|ftp\.)(?:\([-A-Z0-9+&@#/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#/%=~_|$?!:,.]*\)|[A-Z0-9+&@#/%=~_|$])"
+    email_pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
     
-    embed = discord.Embed(title="User Info", color=discord.Color.blue())
-    embed.set_thumbnail(url=target_member.avatar.url if target_member.avatar else None)
-    embed.add_field(name="Username", value=str(target_member), inline=True)
-    embed.add_field(name="User ID", value=target_member.id, inline=True)
+    urls = GetAllMatches(url_pattern, content)
+    emails = GetAllMatches(email_pattern, content)
+    print(urls)
+    print(emails)
+
+# funcion general para expandir los futuros patterns
+def GetAllMatches(regex_pattern:str ,content: str) -> list[str] | None:
+    all_matches: list[str] = re.findall(regex_pattern, content)
+    if all_matches != None:
+        return all_matches
     
-    embed.add_field(name="User Activity", value=target_member.activity, inline=False)
-    embed.add_field(name="User Display Name", value=target_member.display_name, inline=False)
-    
-    embed.add_field(name="Account Created", value=target_member.created_at.strftime("%Y-%m-%d %H:%M:%S"), inline=False)
-    embed.add_field(name="Joined Server", value=target_member.joined_at.strftime("%Y-%m-%d %H:%M:%S"), inline=False)
-    embed.add_field(name="Roles", value=", ".join(roles) if roles else "No Roles", inline=False)
-    
-    await interaction.response.send_message(embed=embed)
+    return None
 
 
+# para mantener el canal limpio
 @tree.command(name="purge", description="Borra los ultimos 100 mensajes recientes")
 async def purge(ctx: commands.Context):
     try:
@@ -96,12 +82,16 @@ async def purge(ctx: commands.Context):
     except Exception as e:
         await ctx.send(f'No se pudieron borrar los mensajes: {e}')
 
-# @tree.command(name="dm", description="manda un mensaje directo desde el bot.")
-# async def dm(ctx: commands.Context, *, message_content: str):
-#     try:
-#         print(f'DM enviado a {user.name}.')
-#     except Exception as e:
-#         await ctx.send(f'No se pudo enviar el mensaje: {e}')
+
+@bot.event
+async def on_ready():
+    print(f'----- BOT ONLINE: {bot.user} -----')
+    try:
+        # Sincroniza los comandos de slash con Discord
+        synced: list[app_commands.AppCommand] = await tree.sync()
+        print(f'[{len(synced)}] Comandos sincronizados.')
+    except Exception as e:
+        print(f'Error al sincronizar comandos: {e}')
 
 
 # Inicia el bot
