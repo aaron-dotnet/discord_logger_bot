@@ -43,9 +43,6 @@ async def on_message(message: discord.Message):
 def GetUserInfo(member: discord.User | discord.Member):
     # ToDo: testing, guardar en bd y refactorizar.
 
-    embed = discord.Embed(title="User Info", color=discord.Color.blue())
-    embed.set_thumbnail(url=member.avatar.url if member.avatar else None)
-
     user_name: str = str(member)
     user_id: int = member.id
     display_name: str = member.display_name
@@ -63,7 +60,6 @@ def GetUserInfo(member: discord.User | discord.Member):
         joined_server,
         roles,
     )
-    print("done")
     print(discord_user.roles)
 
 
