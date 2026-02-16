@@ -8,6 +8,7 @@ Un bot de discord para hacer loggin de mensajes y separar contenido de posible i
 ## Dependencias
 
 - discord.py
+- sqlite
 
 ```bash
 pip install discord.py
