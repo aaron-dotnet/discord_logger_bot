@@ -21,7 +21,7 @@ tree: app_commands.CommandTree = bot.tree
 @dataclass
 class DiscordUser:
     user_id: int
-    user_Name: str
+    user_name: str
     display_names: str  # list[str] (todo: guardar historial de alias)
     avatar_url: str
     account_created: datetime
@@ -35,12 +35,12 @@ async def on_message(message: discord.Message):
     if message.author == bot.user:
         return
     # print(f'{message.author}: {message.content}')
-    GetUserInfo(message.author)
-    GetStuff(message.content)
+    get_user_info(message.author)
+    get_stuff(message.content)
     await bot.process_commands(message)
 
 
-def GetUserInfo(member: discord.User | discord.Member):
+def get_user_info(member: discord.User | discord.Member):
     # ToDo: testing, guardar en bd y refactorizar.
 
     user_name: str = str(member)
@@ -64,16 +64,16 @@ def GetUserInfo(member: discord.User | discord.Member):
 
 
 # rescatamos cositas interesantes:
-def GetStuff(content: str):
+def get_stuff(content: str):
     # url_pattern: str = r"(?:(?:https?|ftp|file)://|www\.|ftp\.)(?:\([-A-Z0-9+&@#/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#/%=~_|$?!:,.]*\)|[A-Z0-9+&@#/%=~_|$])"
     # email_pattern: str = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
     # mexican_rfc_pattern: str = r"/^([A-Z,Ñ,&]{3,4}([0-9]{2})(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1])[A-Z|\d]{3})$/"
     phone_number_pattern: str = r"(?:(?:\+\d{1,3}[-.\ ]?)?(?:\d{1,4}[-.\ ]?)?(?:\(?\d{3}\)?[-.\ ]?\d{3}[-.\ ]?\d{4})|(?:\+\d{1,3}[-.\ ]?)?(?:\d{2}[-\ ]\d{2}[-\ ]\d{2}[-\ ]\d{2}[-\ ]\d{2}))"
 
-    # urls = GetAllMatches(url_pattern, content)
+    # urls = GetAllMatches(url_pattern, content) 
     # emails = GetAllMatches(email_pattern, content)
     # rfcs = GetAllMatches()
-    phones = GetNumbers(phone_number_pattern, content)
+    phones = get_phone_numbers(phone_number_pattern, content)
 
     # print(urls)
     # print(emails)
@@ -91,7 +91,7 @@ def GetAllMatches(regex_pattern: str, content: str) -> list[str] | None:
 
 
 # alternativa (test)
-def GetNumbers(regex_pattern: str, content: str) -> list[str] | None:
+def get_phone_numbers(regex_pattern: str, content: str) -> list[str] | None:
     matches = [m.group(0) for m in re.finditer(regex_pattern, content)]
     return matches or None
 
