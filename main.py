@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import discord
+import controller
 from discord import app_commands
 from discord.ext import commands
 
@@ -58,8 +59,21 @@ def get_user_info(member: discord.User | discord.Member):
         avatar_url,
         account_created,
         joined_server,
-        roles,
+        roles
     )
+    # Guardar usuario
+    controller.connect_db()
+    controller.validate_table("users")
+    controller.insert_discord_user(
+        user_id=user_id,
+        username=user_name,
+        display_name=display_name,
+        avatar_url=avatar_url,
+        account_created=account_created,
+        joined_server=joined_server,
+        roles=roles
+    )
+
     print(discord_user.roles)
 
 
