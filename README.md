@@ -3,7 +3,7 @@
 > [!WARNING]  
 > Este proyecto esta en desarrollo y en una versión muy temprana.
 
-Un bot de discord para hacer loggin de mensajes y separar contenido de posible interes.
+Un bot de discord para hacer loggin de mensajes y separar contenido de posible interes y almacenarlos en una ase de datos.
 
 ## Dependencias
 
@@ -13,3 +13,4 @@ Un bot de discord para hacer loggin de mensajes y separar contenido de posible i
 ```bash
 pip install discord.py
 ```
+
