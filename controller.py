@@ -3,10 +3,8 @@ import sqlite3 as sql
 DB_NAME: str = "simple.db"
 
 
-def connect_db() -> sql.Connection | None:
-    conn: sql.Connection = sql.connect(DB_NAME)
-    conn.close()
-    return None
+def connect_db() -> sql.Connection:
+    return sql.connect(DB_NAME)
 
 
 def create_tables():
@@ -30,11 +28,19 @@ def create_tables():
     execute_command(t_messages)
 
     t_content: str = """CREATE TABLE IF NOT EXISTS message_content (
-        message_id INTEGER PRIMARY KEY,
+        message_id INTEGER,
         content_type TEXT,
-        filtered_content TEXT
+        filtered_content TEXT,
+        PRIMARY KEY (message_id, content_type, filtered_content)
     )"""
     execute_command(t_content)
+
+    execute_command(
+        "CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id)"
+    )
+    execute_command(
+        "CREATE INDEX IF NOT EXISTS idx_message_content_type ON message_content(content_type)"
+    )
 
 
 def insert_discord_user(
@@ -73,44 +79,19 @@ def insert_filtered_content(message_id: int, content_type: str, filtered_content
 
 
 def execute_command(sql_cmd: str, params: tuple = ()) -> bool:
-    conn: sql.Connection = None  # type:ignore
-    try:
-        conn = sql.connect(DB_NAME)
-        cursor: sql.Cursor = conn.cursor()
-        if params:
-            cursor.execute(sql_cmd, params)
-        else:
-            cursor.execute(sql_cmd)
-
-        conn.commit()
-        return True
-    except Exception as ex:
-        print(ex)
-        if conn:
+    with sql.connect(DB_NAME) as conn:
+        try:
+            cursor: sql.Cursor = conn.cursor()
+            if params:
+                cursor.execute(sql_cmd, params)
+            else:
+                cursor.execute(sql_cmd)
+            conn.commit()
+            return True
+        except Exception as ex:
+            print(ex)
             conn.rollback()
-        return False
-    finally:
-        if conn:
-            conn.close()
-
-
-def user_exists(user_id: int) -> bool:
-    """
-    Check if a user exists by user_id (int)
-    """
-    conn: sql.Connection = None  # type:ignore
-    conn = sql.connect(DB_NAME)
-    try:
-        cur = conn.cursor()
-        cur.execute("SELECT 1 FROM users WHERE user_id = ? LIMIT 1", (user_id,))
-
-        return cur.fetchone() is not None
-    except Exception as ex:
-        print(ex)
-        return False
-    finally:
-        if conn:
-            conn.close()
+            return False
 
 
 if __name__ == "__main__":
